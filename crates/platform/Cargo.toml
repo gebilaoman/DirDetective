@@ -1,0 +1,10 @@
+[package]
+name = "dirdetective-platform"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+dirdetective-core = { path = "../core" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# macOS 依赖后续再加（如 launchctl、plist 解析等）

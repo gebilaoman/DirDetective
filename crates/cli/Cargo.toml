@@ -1,0 +1,18 @@
+[package]
+name = "dirdetective"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "dirdetective"
+path = "src/main.rs"
+
+[dependencies]
+dirdetective-core = { path = "../core" }
+dirdetective-platform = { path = "../platform" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+clap = { version = "4", features = ["derive"] }
+serde_yaml = "0.9"
+
+# 表格输出
+comfy-table = "7"
