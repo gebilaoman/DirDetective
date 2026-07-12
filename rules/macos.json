@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "rules": {
     "~/Documents": {
       "owner": "用户",
@@ -137,6 +137,47 @@
       "owner": "Espressif",
       "purpose": "ESP-IDF 开发工具链与配置。",
       "deletable": "caution"
+    },
+    "~/.rustup": {
+      "owner": "Rust",
+      "purpose": "rustup 安装的 Rust 工具链（各版本编译器）。",
+      "deletable": "caution",
+      "delete_effect": "删除后需用 rustup 重新安装工具链。"
+    },
+    "~/.ollama": {
+      "owner": "Ollama",
+      "purpose": "Ollama 本地大模型与运行数据。",
+      "deletable": "caution",
+      "delete_effect": "删除会丢失已下载的模型，需重新拉取。"
+    },
+    "~/.pyenv": {
+      "owner": "pyenv",
+      "purpose": "pyenv 管理的 Python 版本与 shims。",
+      "deletable": "caution"
+    },
+    "~/.android": {
+      "owner": "Android",
+      "purpose": "Android SDK、AVD 模拟器镜像与配置。",
+      "deletable": "caution",
+      "delete_effect": "删除会移除 SDK 与模拟器，需重新下载。"
+    },
+    "~/.bun": {
+      "owner": "Bun",
+      "purpose": "Bun 运行时缓存与全局包。",
+      "deletable": "caution",
+      "delete_effect": "删除后 Bun 会重新下载。"
+    },
+    "~/.deno": {
+      "owner": "Deno",
+      "purpose": "Deno 模块缓存。",
+      "deletable": "safe",
+      "delete_effect": "删除后 Deno 会在下次运行时重新下载依赖。"
+    },
+    "~/go": {
+      "owner": "Go",
+      "purpose": "Go 工作区与模块缓存（GOPATH）。",
+      "deletable": "caution",
+      "delete_effect": "删除会移除已下载的模块与已安装的工具。"
     }
   }
 }
