@@ -65,7 +65,7 @@ pub struct Verdict {
 }
 
 pub const SCHEMA_VERSION: u32 = 1;
-pub const PROMPT_VERSION: u32 = 1;
+pub const PROMPT_VERSION: u32 = 2;
 
 fn default_schema_version() -> u32 {
     SCHEMA_VERSION

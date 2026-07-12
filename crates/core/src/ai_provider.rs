@@ -110,16 +110,23 @@ impl ZhipuAIProvider {
 
     /// 构建 analysis prompt
     pub fn build_prompt(&self, dirs: &[DirectoryMeta], _evidence: &EvidencePool) -> String {
-        let mut prompt = String::from("请分析以下目录是干嘛的，返回 JSON 格式。\n\n");
+        let mut prompt = String::from(
+            "你是磁盘目录分析助手。请先根据目录名与路径推断它属于哪个具体软件或厂商，再判断它的用途与可删性。返回 JSON。\n\n",
+        );
 
-        prompt.push_str("要求：\n");
-        prompt.push_str("- purpose: 用自然语言解释这个目录是干嘛的，像跟朋友聊天一样说明白\n");
-        prompt.push_str("- owner: 这个目录属于哪个软件/工具\n");
-        prompt.push_str("- delete_effect: 单独说明删除后会发生什么\n");
-        prompt.push_str("- deletable: safe(可删)/caution(谨慎)/never(保留)/unknown(不确定)\n\n");
+        prompt.push_str("识别要点：\n");
+        prompt.push_str(
+            "- 目录名往往能直接指明归属，例如 WPKCaches→WPS Office、com.apple.Safari→Safari、.augmentcode→Augment Code、Code Cache→VS Code/Electron 应用；中国区常见软件（WPS、QQ、微信、网易、字节、腾讯等）也要尽量识别。\n",
+        );
+        prompt.push_str("- 可以根据目录名/路径推断归属软件，但不要罗列具体文件名，也不要猜测文件里的内容。\n\n");
+
+        prompt.push_str("字段要求：\n");
+        prompt.push_str("- owner: 给出**具体**的软件/厂商名称（如 “WPS Office”）；实在无法判断才写 null，禁止写“某个软件”“未知应用”这类含糊说法。\n");
+        prompt.push_str("- purpose: 具体说明这个目录是什么、存了哪类数据（缓存/配置/备份/日志/模型等），别用泛泛的比喻，一两句讲清即可。\n");
+        prompt.push_str("- delete_effect: 具体说明删除后的影响——能否被应用重新生成、会丢失什么（如自动恢复记录、登录状态、已下载内容）。\n");
+        prompt.push_str("- deletable: safe(可删)/caution(谨慎)/never(保留)/unknown(不确定)\n");
         prompt.push_str("- confidence: 仅在确有把握时返回 0 到 1 的真实置信度，否则返回 null\n");
-        prompt.push_str("- reason: 必须说明判断依据，不得为空\n");
-        prompt.push_str("- 禁止在 purpose/delete_effect 中罗列具体文件名或推断文件内容\n\n");
+        prompt.push_str("- reason: 必须说明判断依据（基于目录名/路径的哪些线索），不得为空\n\n");
 
         prompt.push_str("## 待分析目录\n");
         for dir in dirs {
