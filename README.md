@@ -1,221 +1,132 @@
-# DirDetective — AI 磁盘归属分析与清理工具
+# DirDetective — 看懂每个目录，再决定要不要清理
 
-> 磁盘清理工具告诉你"哪里占地方"，DirDetective 告诉你"**这是谁的、能不能删**"。
+> 磁盘清理工具告诉你"哪里占地方"，DirDetective 告诉你"**这是谁的、存了什么、删了会怎样**"。
 
-## 产品定位
+面向开发者与高级用户：家目录/缓存/应用支持里堆了一堆看不懂的隐藏目录（`.augmentcode`、`.V2rayU`、`.dat.nosync…`），不知道哪些还在用、哪些是卸载残留。DirDetective 帮你判断每个目录的**归属、用途、可删性**，再由你决定清理，而不是一个个拿去问 AI。
 
-目标用户：开发者及高级用户，用户目录下堆积大量隐藏目录/缓存/残留，想快速判断"这是谁的、属于哪个应用、是否为卸载残留、能不能安全删除"。
-
-## 核心功能
-
-### 三层判断漏斗
-
-```
-本地规则（免费，~80% 命中）→ AI 分析（智谱 GLM）→ 本地缓存字典
-```
-
-1. **本地规则**：内置 20+ 常见目录规则（.gradle/.npm/.vscode 等），免费快速
-2. **AI 分析**：未知目录批量送智谱 GLM-4-Flash 分析，注入本机证据池（已装应用/包/扩展）
-3. **缓存字典**：同名目录只问一次（v0.3）
-
-### 确定性判定
-
-- **"在装 / 残留"**：基于本机证据池判定，不依赖 AI
-- **"可删 / 谨慎 / 保留"**：结合规则与 AI 理由
-
-## 安装
-
-### 从源码编译
-
-```bash
-git clone <repo>
-cd DirDetective/code/DirDetective
-cargo build --release
-```
-
-编译后的二进制：`./target/release/dirdetective`
-
-### Cargo 安装（开发中）
-
-```bash
-cargo install --path crates/cli
-```
-
-## 使用
-
-### 1. 配置 AI API Key（可选）
-
-首次使用 AI 功能需要配置智谱 API Key：
-
-```bash
-# 交互式输入（推荐，密码安全）
-dirdetective config set-zhipu-key
-
-# 或直接传入
-dirdetective config set-zhipu-key your-api-key-here
-
-# 查看当前配置
-dirdetective config show
-```
-
-API Key 存储在系统密钥链（macOS Keychain / Windows Credential Manager），无需重复输入。
-
-**获取智谱 API Key：**
-- 访问 https://open.bigmodel.cn/
-- 注册/登录后进入 API Key 页面
-- 创建新 Key（建议选择 `glm-4-flash` 以降低成本）
-
-### 2. 扫描磁盘
-
-```bash
-# 默认扫描（~ + ~/Library/Caches + ~/Library/Application Support）
-dirdetective scan
-
-# 指定扫描路径
-dirdetective scan --paths ~/Library/Caches
-
-# 启用 AI 分析未知目录
-dirdetective scan --ai
-
-# 自定义 AI 批量大小（默认 20）
-dirdetective scan --ai --ai-batch 30
-```
-
-### 3. 输出说明
-
-| 列 | 说明 |
-|---|---|
-| 目录 | 目录名 |
-| 归属 | 所属应用/工具 |
-| 状态 | ✅ 在装 / ⚠️ 残留 |
-| 建议 | 可删（绿色）/ 谨慎（黄色）/ 保留（红色）/ 未知（灰色）|
-| 来源 | 规则（本地）/ AI（智谱）/ 缓存 / 未知 |
-| 大小 | 占用空间 |
-
-**示例输出：**
-
-```
-┌────────────────────────┬──────────────┬─────────┬──────┬──────┬──────────┐
-│ 目录                   ┆ 归属         ┆ 状态    ┆ 建议 ┆ 来源 ┆ 大小     │
-╞════════════════════════╪══════════════╪═════════╪══════╪══════╪══════════╡
-│ .m2                    ┆ Maven        ┆ ✅ 在装 ┆ 可删 ┆ 规则 ┆ 7.4 GB   │
-│ .lmstudio              ┆ LM Studio    ┆ ✅ 在装 ┆ 谨慎 ┆ AI   ┆ 2.7 GB   │
-│ .augmentcode           ┆ Augment Code ┆ ⚠️ 残留 ┆ 可删 ┆ 规则 ┆ 207.2 MB │
-│ .ssh                   ┆ 系统         ┆ ✅ 在装 ┆ 保留 ┆ 规则 ┆ 71.7 KB  │
-└────────────────────────┴──────────────┴─────────┴──────┴──────┴──────────┘
-```
-
-## 工作原理
-
-### 证据收集（MacCollector）
-
-- 已安装应用：`/Applications`、`~/Applications`、`brew list --cask`
-- 包管理器：Homebrew（formula + cask）、npm -g
-- 编辑器扩展：`~/.vscode/extensions`、JetBrains 插件
-- 进程：运行中的应用（TODO）
-
-### 规则匹配
-
-内置规则覆盖常见开发工具：
-
-| 目录 | 归属 | 可删性 |
-|---|---|---|
-| `.gradle` | Gradle | safe（缓存） |
-| `.npm` | npm | caution（在用）/ safe（卸载后） |
-| `.vscode` | VS Code | caution |
-| `.ssh` / `.gnupg` | 系统 | never（保护） |
-
-### AI 分析（智谱 GLM-4-Flash）
-
-- 批量分析：每次 20 个目录（可配置）
-- Prompt 注入：本机证据池（已装应用/包/扩展清单）
-- 输出格式：JSON（owner、purpose、deletable、reason）
-- 模型选择：`glm-4-flash`（快速便宜，适合批量分析）
-
-## 隐私与安全
-
-### 数据边界
-
-**仅上传元数据，绝不上传文件内容：**
-- 目录名、大小、修改时间
-- 顶层文件名采样（最多 20 个）
-- 本机已装应用/包/扩展清单
-
-**路径脱敏：**
-- `~` 替换为 `~`
-- `%USERPROFILE%` 替换为 `%USERPROFILE%`
-
-**删除安全：**
-- 仅移至系统回收站（`trash` crate）
-- 永远可撤销
-- `never` 级不渲染删除按钮
-
-### Ollama 全本地模式（v0.3）
-
-支持 `localhost:11434` 的 Ollama，数据不出本机。
-
-## 开发
-
-### 项目结构
-
-```
-dirdetective/
-├── crates/
-│   ├── core/          # 平台无关：Scanner / RuleEngine / AIProvider / Models
-│   ├── platform/      # EvidenceCollector trait + MacCollector / WinCollector
-│   └── cli/           # 命令行入口
-├── src/               # 前端（Tauri，v0.3）
-└── 资料/              # 设计文档
-```
-
-### 运行
-
-```bash
-# 开发模式
-cargo run -- scan --ai
-
-# 构建
-cargo build --release
-
-# 测试
-cargo test
-```
-
-## 路线图
-
-| 版本 | 内容 |
-|---|---|
-| **v0.1** | ✅ core + platform(mac) + CLI 表格 |
-| **v0.2** | ✅ AIProvider（智谱 GLM）+ 缓存字典 |
-| v0.3 | Tauri GUI + 回收站删除 + 设置页（mac） |
-| v0.4 | WinCollector + Windows 支持 |
-| v0.5 | 社区字典拉取 + 应用内提交 |
-| v0.6 | 首个公开 Release |
-
-## 贡献
-
-欢迎贡献规则、报告 Bug、提建议。
-
-### 贡献规则
-
-在 `crates/cli/rules/built-in.yaml` 中添加新规则：
-
-```yaml
-- name: ".your-tool"
-  owner: "Your Tool"
-  kind: "cache"
-  purpose: "Your Tool 的缓存目录"
-  deletable: "safe"
-  match_keywords: ["your", "tool"]
-  platforms: ["macos", "windows"]
-```
-
-## License
-
-MIT
+当前为 **macOS 桌面应用**（Tauri，Rust + WebView），Windows/Linux 规划中。
 
 ---
 
-**磁盘空间不够？别再一个一个问 AI 了。**
+## ✨ 功能
 
-`dirdetective scan --ai` 一键扫清。
+- **三层判定漏斗**：内置规则库（免费、秒出）→ 未知项交 AI 分析 → 结果本地缓存，越用越快
+- **逐目录并发分析**：批量分析带进度、剩余时间估算，可随时停止，单个失败不影响其余
+- **AI 详解**：详情页可即席问 AI "这个路径是什么"，直接看模型原文
+- **安全清理**：移到废纸篓（可恢复）；内置"清理防护"拦住系统/根/家目录本身
+- **保护与已识别**：手动保护关键目录；确认准确的分析可锁定复用
+- **规则库可更新**：官方规则以"完整路径 → 判定"的 JSON 维护，可在设置内联网检查更新，不必等 App 发版
+- **多语言**：中文 / English，跟随系统，设置内可切换
+- **隐私优先**：只分析目录名与文件名，**从不读取文件内容**
+
+---
+
+## 🚀 直接使用（一般用户）
+
+1. 到 [Releases](https://github.com/gebilaoman/DirDetective/releases) 下载最新 macOS 安装包（`.dmg` / `.app`），拖到「应用程序」。
+2. **首次打开若提示"已损坏"**：这是未签名应用被 macOS Gatekeeper 拦截（并非真损坏）。终端执行一次即可：
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/DirDetective.app
+   ```
+   之后正常双击打开。
+3. **配置 AI（可选，用于分析未知目录）**：打开 App → 设置 → 模型配置，选择厂家（智谱 GLM / OpenAI / DeepSeek / OpenRouter / 自定义 OpenAI 兼容服务），填入 Base URL、API Key、模型，保存。
+   - 智谱 API Key：https://open.bigmodel.cn/ 注册后创建。
+   - Key 只保存在本机配置文件（`~/Library/Application Support/DirDetective/config.json`）。
+4. **开始用**：侧边栏选一个扫描位置（缓存 / 应用支持 / 家目录 / 自定义），或点「分析当前目录」，逐项查看归属与可删性，需要时「清理」移到废纸篓。
+
+> 没有 AI Key 也能用：内置规则库会直接判定常见目录，未知项才需要 AI。
+
+---
+
+## 🛠 从源码构建 / 开发
+
+### 依赖
+- [Rust](https://rustup.rs/)（stable）
+- [Node.js](https://nodejs.org/) 20+
+- [pnpm](https://pnpm.io/) 9+
+- macOS：Xcode Command Line Tools（`xcode-select --install`）
+
+### 开发模式（热更新）
+```bash
+git clone https://github.com/gebilaoman/DirDetective.git
+cd DirDetective/code/DirDetective/gui
+pnpm install
+pnpm tauri dev
+```
+前端（`gui/main.js`、`index.html`、`styles.css`）改动热更新；Rust（`crates/*`、`gui/src-tauri`）改动自动重编。
+
+### 打包
+```bash
+cd gui
+pnpm tauri build            # 产物在 gui/src-tauri/target/release/bundle/
+pnpm tauri:build:signed     # 带更新签名（需本地 gui/.env.secret 私钥）
+```
+
+### 附带的实验性 CLI
+```bash
+cargo run -p dirdetective -- scan
+```
+
+### 项目结构
+```
+code/DirDetective/
+├── crates/
+│   ├── core/         # 平台无关：Scanner / RuleEngine / AIProvider / Models
+│   ├── platform/     # 证据采集（已装应用/包/扩展）
+│   └── cli/          # 实验性命令行入口
+├── gui/              # Tauri 桌面应用（前端 + src-tauri 后端）
+└── rules/            # 官方规则库（按平台分文件，见下）
+```
+
+---
+
+## 🔒 隐私与安全
+
+- **只上传元数据，绝不上传文件内容**：目录名、文件名采样、大小、修改时间，以及本机已装应用/包/扩展清单。
+- **路径脱敏**：家目录前缀替换为 `~` 再发给 AI。
+- **清理防护**（设置 → 清理防护）：系统目录（`/System`、`/Library`、`/usr`…）、根目录、家目录本身及其上级绝不允许删除；只允许清理这些之外的具体项。
+- **可恢复**：清理只移到废纸篓，永远可撤销。
+
+---
+
+## 📚 规则库
+
+官方规则库以"**完整路径 → 判定**"的 JSON 维护（与本地缓存同构），按平台分文件：`rules/macos.json`（Windows/Linux 规划中）。
+
+```jsonc
+{
+  "version": 1,
+  "rules": {
+    "~/.your-tool": {
+      "owner": "Your Tool",
+      "purpose": "Your Tool 的本地缓存",
+      "deletable": "safe",           // safe / caution / never / unknown
+      "delete_effect": "删除后会重新生成"
+    }
+  }
+}
+```
+
+**如何贡献规则**：编辑 `rules/macos.json` 增加条目 → 递增顶部 `version` → `cargo test -p dirdetective-core` 通过 → 提 PR。
+合并发布后，用户在**设置 → 规则库 → 检查更新**即可联网拉到，无需更新 App。
+
+---
+
+## 🗺 路线图
+
+| 版本 | 内容 |
+|---|---|
+| v0.1 | ✅ 桌面应用（扫描 / 规则 + AI 分析 / 缓存 / 清理 / 设置） |
+| v0.1.x | ✅ 规则库路径化 JSON + 联网更新、i18n 框架、更新器 |
+| v0.2 | i18n 全量（动态文案 + 后端提示）、规则库扩充 |
+| 后续 | Windows/Linux 适配、社区规则字典、Apple 签名公证 |
+
+---
+
+## 🤝 贡献
+
+欢迎贡献规则（见上）、报告 Bug、提建议与 PR。
+
+## License
+
+[MIT](LICENSE)
