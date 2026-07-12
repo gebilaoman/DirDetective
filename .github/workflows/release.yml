@@ -18,31 +18,20 @@ jobs:
           - platform: 'macos-aarch64'
             os: macos-latest
             target: aarch64-apple-darwin
-            rust_target: aarch64-apple-darwin
           - platform: 'macos-x86_64'
             os: macos-latest
             target: x86_64-apple-darwin
-            rust_target: x86_64-apple-darwin
           - platform: 'windows-x86_64'
             os: windows-latest
             target: x86_64-pc-windows-msvc
-            rust_target: x86_64-pc-windows-msvc
           - platform: 'linux-x86_64'
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            rust_target: x86_64-unknown-linux-gnu
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: gui/package-lock.json
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -50,23 +39,38 @@ jobs:
           version: 9
           run_install: false
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: gui/pnpm-lock.yaml
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.rust_target }}
+          targets: ${{ matrix.target }}
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev
 
       - name: Install frontend dependencies
         working-directory: gui
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Build frontend
-        working-directory: gui
-        run: pnpm build
-
-      - name: Build Tauri app
+      - name: Build and release Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tauriScript: |
-            cd gui && cargo tauri build --target ${{ matrix.target }}
+          projectPath: gui
+          tagName: ${{ github.ref_name }}
+          releaseName: 'DirDetective ${{ github.ref_name }}'
+          releaseDraft: true
+          prerelease: false
+          args: --target ${{ matrix.target }}
