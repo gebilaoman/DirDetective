@@ -296,9 +296,45 @@ fn save_cache(cache: &HashMap<String, dirdetective_core::models::Verdict>) -> Re
     write_private_json(&get_cache_path(), cache)
 }
 
+/// 当前系统对应的规则文件名。
+fn os_rules_filename() -> &'static str {
+    if cfg!(target_os = "windows") {
+        "windows.json"
+    } else if cfg!(target_os = "macos") {
+        "macos.json"
+    } else {
+        "linux.json"
+    }
+}
+
+/// 规则文件在数据目录中的完整路径：~/Library/Application Support/DirDetective/rules/<os>.yaml
+fn rules_file_path() -> PathBuf {
+    get_data_dir().join("rules").join(os_rules_filename())
+}
+
+/// 确保数据目录里有规则文件：缺失/损坏时写入内嵌种子；内嵌种子版本更高时也刷新（App 更新兜底）。
+fn ensure_rules_seeded() {
+    let _ = ensure_data_dirs();
+    let path = rules_file_path();
+    let seed = RuleEngine::seed();
+    let need_write = match fs::read_to_string(&path)
+        .ok()
+        .and_then(|s| RuleEngine::from_json_str(&s).ok())
+    {
+        Some(existing) => seed.version() > existing.version(),
+        None => true,
+    };
+    if need_write {
+        let _ = fs::write(&path, dirdetective_core::rule_engine::SEED_RULES_MACOS);
+    }
+}
+
+/// 加载规则引擎：优先读数据目录里的规则文件，读不到/解析失败则回退内嵌种子。
 fn built_in_rule_engine() -> RuleEngine {
-    RuleEngine::from_yaml_str(include_str!("../../../crates/cli/rules/built-in.yaml"))
-        .expect("内置规则必须是有效 YAML")
+    fs::read_to_string(rules_file_path())
+        .ok()
+        .and_then(|s| RuleEngine::from_json_str(&s).ok())
+        .unwrap_or_else(RuleEngine::seed)
 }
 
 fn current_model_id(config: &StoredConfig) -> String {
@@ -803,6 +839,95 @@ fn get_trash_guard_rules() -> TrashGuardRules {
     }
 }
 
+#[derive(Debug, Serialize)]
+pub struct RuleSummary {
+    pub path: String,
+    pub owner: String,
+    pub deletable: String,
+    pub purpose: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RulesetInfo {
+    pub os: String,
+    pub version: u32,
+    pub count: usize,
+    pub path: String,
+    pub rules: Vec<RuleSummary>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RulesUpdateResult {
+    pub updated: bool,
+    pub local_version: u32,
+    pub remote_version: u32,
+    pub count: usize,
+}
+
+#[tauri::command]
+fn get_ruleset_info() -> RulesetInfo {
+    let engine = built_in_rule_engine();
+    let mut rules: Vec<RuleSummary> = engine
+        .rules()
+        .iter()
+        .map(|(path, entry)| RuleSummary {
+            path: path.clone(),
+            owner: entry.owner.clone().unwrap_or_default(),
+            deletable: entry.deletable.clone(),
+            purpose: entry.purpose.clone(),
+        })
+        .collect();
+    rules.sort_by(|a, b| a.path.cmp(&b.path));
+    RulesetInfo {
+        os: os_rules_filename().trim_end_matches(".json").to_string(),
+        version: engine.version(),
+        count: engine.rule_count(),
+        path: rules_file_path().display().to_string(),
+        rules,
+    }
+}
+
+#[tauri::command]
+async fn update_rules() -> Result<RulesUpdateResult, String> {
+    let url = format!(
+        "https://raw.githubusercontent.com/gebilaoman/DirDetective/main/rules/{}",
+        os_rules_filename()
+    );
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| format!("创建 HTTP 客户端失败: {}", e))?;
+    let resp = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("拉取规则失败: {}", e))?;
+    if !resp.status().is_success() {
+        return Err(format!(
+            "拉取规则失败：HTTP {}（若仓库为 private，raw 文件无法匿名下载；公开后即可）",
+            resp.status()
+        ));
+    }
+    let text = resp
+        .text()
+        .await
+        .map_err(|e| format!("读取规则内容失败: {}", e))?;
+    let remote =
+        RuleEngine::from_json_str(&text).map_err(|e| format!("远程规则不是合法 JSON: {}", e))?;
+    let local_version = built_in_rule_engine().version();
+    let remote_version = remote.version();
+    if remote_version > local_version {
+        let _ = ensure_data_dirs();
+        fs::write(rules_file_path(), &text).map_err(|e| format!("写入规则文件失败: {}", e))?;
+    }
+    Ok(RulesUpdateResult {
+        updated: remote_version > local_version,
+        local_version,
+        remote_version,
+        count: remote.rule_count(),
+    })
+}
+
 #[tauri::command]
 fn add_custom_location(path: String) -> Result<Vec<String>, String> {
     let mut stored = load_config();
@@ -1032,6 +1157,8 @@ fn trash_directory(path: String, force_protected: bool) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 启动时确保数据目录里有规则文件（首次写入内嵌种子；App 更新带来更高版本种子时刷新）。
+    ensure_rules_seeded();
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -1058,6 +1185,8 @@ pub fn run() {
             open_data_directory,
             open_in_file_manager,
             explain_path,
+            get_ruleset_info,
+            update_rules,
             fetch_models,
             reanalyze_directory,
             trash_directory,

@@ -167,61 +167,41 @@ pub enum ScanError {
     },
 }
 
-/// 本地规则（YAML 配置）
-#[derive(Debug, Clone, Deserialize)]
-pub struct Rule {
-    /// 目录名或匹配模式
-    pub name: String,
-    /// 归属应用
-    pub owner: String,
-    /// 类型（cache / plugin / config / data / residue）
+/// 单条规则：以完整路径为键，值只描述"这是什么、能不能删"。
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct RuleEntry {
+    /// 归属应用/主体
     #[serde(default)]
-    pub kind: String,
+    pub owner: Option<String>,
     /// 用途说明
     pub purpose: String,
+    /// 删除后果（可选，为空时引擎按可删性给默认说明）
     #[serde(default)]
     pub delete_effect: String,
-    #[serde(default = "default_rule_category")]
-    pub category: String,
-    /// 可删性（safe / caution / never）
+    /// 可删性（safe / caution / never / unknown）
     #[serde(default = "default_deletable")]
     pub deletable: String,
-    /// 若 app 未卸载时的可删性（可选，用于区分"在用时是数据，卸载后是残留"）
-    pub deletable_if_uninstalled: Option<String>,
-    /// 匹配关键词（用于模糊匹配）
+}
+
+/// 规则集：`{ version, rules: { "完整路径": RuleEntry } }`（与缓存同构，以路径为键）。
+#[derive(Debug, Clone, Deserialize)]
+pub struct RuleSet {
     #[serde(default)]
-    pub match_keywords: Vec<String>,
+    pub version: u32,
     #[serde(default)]
-    pub path_contains: Vec<String>,
-    /// 支持的平台（macos / windows / linux）
-    #[serde(default)]
-    pub platforms: Vec<String>,
+    pub rules: std::collections::HashMap<String, RuleEntry>,
 }
 
 fn default_deletable() -> String {
     "unknown".to_string()
 }
 
-fn default_rule_category() -> String {
-    "known".to_string()
-}
-
-impl Rule {
-    /// 从 deletable 字符串解析为 Deletable
-    pub fn parse_deletable(&self, is_installed: bool) -> Deletable {
-        let deletable_str = if is_installed {
-            &self.deletable
-        } else {
-            self.deletable_if_uninstalled
-                .as_ref()
-                .unwrap_or(&self.deletable)
-        };
-
-        match deletable_str.as_str() {
-            "safe" => Deletable::Safe,
-            "caution" => Deletable::Caution,
-            "never" => Deletable::Never,
-            _ => Deletable::Unknown,
-        }
+/// 把 deletable 字符串解析为 Deletable。
+pub fn parse_deletable(s: &str) -> Deletable {
+    match s {
+        "safe" => Deletable::Safe,
+        "caution" => Deletable::Caution,
+        "never" => Deletable::Never,
+        _ => Deletable::Unknown,
     }
 }

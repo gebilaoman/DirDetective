@@ -98,6 +98,7 @@
                     <button class="settings-tab" type="button" data-settings-tab="models" data-i18n="settings.tab.models">模型配置</button>
                     <button class="settings-tab" type="button" data-settings-tab="whitelist" data-i18n="settings.tab.whitelist">已保护目录</button>
                     <button class="settings-tab" type="button" data-settings-tab="knowledge" data-i18n="settings.tab.knowledge">已识别目录</button>
+                    <button class="settings-tab" type="button" data-settings-tab="ruleset" data-i18n="settings.tab.ruleset">规则库</button>
                     <button class="settings-tab" type="button" data-settings-tab="guard" data-i18n="settings.tab.guard">清理防护</button>
                     <button class="settings-tab" type="button" data-settings-tab="about" data-i18n="settings.tab.about">关于</button>
                 </nav>
@@ -197,6 +198,13 @@
                         <button id="refreshKnowledgeBtn" type="button" data-i18n="settings.refresh">刷新</button>
                     </div>
                     <div id="knowledgeSettingsList" class="settings-data-list knowledge-list"></div>
+                </section>
+
+                <section class="settings-panel" data-settings-panel="ruleset">
+                    <div class="settings-panel-header">
+                        <div><h1 data-i18n="settings.ruleset.title">规则库</h1><p data-i18n="settings.ruleset.desc">内置官方规则库，用于快速判定常见目录归属与可删性；可联网检查更新。</p></div>
+                    </div>
+                    <div id="rulesetSettingsContent" class="ruleset-content"></div>
                 </section>
 
                 <section class="settings-panel" data-settings-panel="guard">

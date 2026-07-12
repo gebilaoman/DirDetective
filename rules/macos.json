@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "rules": {
+    "~/Documents": {
+      "owner": "用户",
+      "purpose": "你的个人文档目录，本工具不分析其中内容。",
+      "deletable": "never",
+      "delete_effect": "这是个人文件夹，不应由 DirDetective 给出清理建议。"
+    },
+    "~/Desktop": {
+      "owner": "用户",
+      "purpose": "你的桌面目录，本工具不分析其中内容。",
+      "deletable": "never",
+      "delete_effect": "这是个人文件夹，不应由 DirDetective 给出清理建议。"
+    },
+    "~/Downloads": {
+      "owner": "用户",
+      "purpose": "你的下载目录，本工具不分析其中内容。",
+      "deletable": "never",
+      "delete_effect": "这是个人文件夹，不应由 DirDetective 给出清理建议。"
+    },
+    "~/Pictures": {
+      "owner": "用户",
+      "purpose": "你的图片目录，本工具不分析其中内容。",
+      "deletable": "never",
+      "delete_effect": "这是个人文件夹，不应由 DirDetective 给出清理建议。"
+    },
+    "~/Movies": {
+      "owner": "用户",
+      "purpose": "你的影片目录，本工具不分析其中内容。",
+      "deletable": "never",
+      "delete_effect": "这是个人文件夹，不应由 DirDetective 给出清理建议。"
+    },
+    "~/Music": {
+      "owner": "用户",
+      "purpose": "你的音乐目录，本工具不分析其中内容。",
+      "deletable": "never",
+      "delete_effect": "这是个人文件夹，不应由 DirDetective 给出清理建议。"
+    },
+    "~/.config": {
+      "owner": "系统",
+      "purpose": "各类应用的配置目录（通用）。",
+      "deletable": "never"
+    },
+    "~/.local": {
+      "owner": "系统",
+      "purpose": "各类应用的数据目录（通用）。",
+      "deletable": "never"
+    },
+    "~/.cache": {
+      "owner": "系统",
+      "purpose": "各类应用的缓存目录（通用）。",
+      "deletable": "caution"
+    },
+    "~/.augmentcode": {
+      "owner": "Augment Code",
+      "purpose": "AI 编程插件的账号与索引数据。",
+      "deletable": "caution"
+    },
+    "~/.V2rayU": {
+      "owner": "V2rayU",
+      "purpose": "V2rayU 代理客户端配置与订阅。",
+      "deletable": "caution"
+    },
+    "~/.vscode": {
+      "owner": "VS Code",
+      "purpose": "VS Code 用户配置、扩展、快捷键。",
+      "deletable": "caution"
+    },
+    "~/.cursor": {
+      "owner": "Cursor",
+      "purpose": "Cursor AI 编辑器的配置与扩展。",
+      "deletable": "caution"
+    },
+    "~/.claude": {
+      "owner": "Claude",
+      "purpose": "Claude CLI 配置与缓存。",
+      "deletable": "safe"
+    },
+    "~/.docker": {
+      "owner": "Docker",
+      "purpose": "Docker 构建上下文与缓存。",
+      "deletable": "caution"
+    },
+    "~/.vim": {
+      "owner": "Vim",
+      "purpose": "Vim 编辑器配置与插件。",
+      "deletable": "caution"
+    },
+    "~/.npm": {
+      "owner": "npm",
+      "purpose": "npm 全局包缓存。",
+      "deletable": "caution",
+      "delete_effect": "删除后 npm 会在下次安装时重新下载。"
+    },
+    "~/.cargo": {
+      "owner": "Cargo/Rust",
+      "purpose": "Rust Cargo 编译缓存与注册表索引。",
+      "deletable": "caution",
+      "delete_effect": "删除后 Cargo 会重新下载依赖与索引。"
+    },
+    "~/.gradle": {
+      "owner": "Gradle",
+      "purpose": "Gradle 构建工具缓存与依赖。",
+      "deletable": "safe",
+      "delete_effect": "删除后 Gradle 会在下次构建时重新下载并重建缓存。"
+    },
+    "~/.node-gyp": {
+      "owner": "Node.js",
+      "purpose": "Node.js 原生模块编译缓存。",
+      "deletable": "safe",
+      "delete_effect": "删除后相关模块会在下次构建时重新生成。"
+    },
+    "~/.yarn": {
+      "owner": "Yarn",
+      "purpose": "Yarn 包管理器缓存。",
+      "deletable": "safe",
+      "delete_effect": "删除后 Yarn 会重新下载依赖。"
+    },
+    "~/.lein": {
+      "owner": "Leiningen",
+      "purpose": "Clojure Leiningen 构建工具缓存。",
+      "deletable": "safe"
+    },
+    "~/.m2": {
+      "owner": "Maven",
+      "purpose": "Maven 依赖缓存。",
+      "deletable": "safe",
+      "delete_effect": "删除后 Maven 会在下次构建时重新下载依赖。"
+    },
+    "~/.platformio": {
+      "owner": "PlatformIO",
+      "purpose": "PlatformIO 嵌入式开发工具缓存。",
+      "deletable": "safe"
+    },
+    "~/.espressif": {
+      "owner": "Espressif",
+      "purpose": "ESP-IDF 开发工具链与配置。",
+      "deletable": "caution"
+    }
+  }
+}

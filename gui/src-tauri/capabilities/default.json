@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "主窗口所需的核心与更新器权限（应用自定义命令不受 ACL 限制，无需在此列出）。",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "updater:default"
+  ]
+}

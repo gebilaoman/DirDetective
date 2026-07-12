@@ -11,24 +11,8 @@ permissions:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'macos-aarch64'
-            os: macos-latest
-            target: aarch64-apple-darwin
-          - platform: 'macos-x86_64'
-            os: macos-latest
-            target: x86_64-apple-darwin
-          - platform: 'windows-x86_64'
-            os: windows-latest
-            target: x86_64-pc-windows-msvc
-          - platform: 'linux-x86_64'
-            os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-
-    runs-on: ${{ matrix.os }}
+    # 只出 macOS 包（universal，一个任务覆盖 Intel + Apple Silicon），节省 Actions 额度。
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,19 +33,13 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
-
-      - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
 
       - name: Install frontend dependencies
         working-directory: gui
         run: pnpm install --frozen-lockfile
 
-      - name: Build and release Tauri app
+      - name: Build and release Tauri app (macOS universal)
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -73,4 +51,4 @@ jobs:
           releaseName: 'DirDetective ${{ github.ref_name }}'
           releaseDraft: true
           prerelease: false
-          args: --target ${{ matrix.target }}
+          args: --target universal-apple-darwin

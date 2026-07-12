@@ -1463,6 +1463,64 @@ function switchSettingsTab(tab) {
         elements.downloadUpdateBtn.style.display = 'none';
     } else if (tab === 'guard') {
         renderGuardSettings();
+    } else if (tab === 'ruleset') {
+        renderRulesetSettings();
+    }
+}
+
+async function renderRulesetSettings() {
+    const box = elements.rulesetSettingsContent;
+    box.replaceChildren(createElement('div', 'list-empty', '正在读取规则库…'));
+    try {
+        const info = await invoke('get_ruleset_info');
+        box.replaceChildren();
+
+        const bar = createElement('div', 'ruleset-bar');
+        const meta = createElement('div', 'ruleset-meta');
+        meta.append(
+            createElement('span', 'ruleset-version', `版本 v${info.version}`),
+            createElement('span', 'ruleset-count', `${info.count} 条规则 · ${info.os}`),
+        );
+        const updateBtn = createElement('button', 'primary-button', '检查更新');
+        updateBtn.type = 'button';
+        updateBtn.addEventListener('click', async () => {
+            updateBtn.disabled = true;
+            const label = updateBtn.textContent;
+            updateBtn.textContent = '检查中…';
+            try {
+                const r = await invoke('update_rules');
+                if (r.updated) {
+                    elements.scanStatus.textContent = `规则库已更新：v${r.local_version} → v${r.remote_version}（${r.count} 条）`;
+                    renderRulesetSettings();
+                    return;
+                }
+                elements.scanStatus.textContent = `规则库已是最新：本地 v${r.local_version}，远程 v${r.remote_version}`;
+            } catch (error) {
+                elements.scanStatus.textContent = `检查更新失败：${String(error)}`;
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.textContent = label;
+            }
+        });
+        bar.append(meta, updateBtn);
+        box.append(bar, createElement('p', 'field-note', `规则文件：${info.path}`));
+
+        const list = createElement('div', 'ruleset-list');
+        info.rules.forEach((rule) => {
+            const row = createElement('div', 'ruleset-row');
+            const head = createElement('div', 'ruleset-row-head');
+            head.append(
+                createElement('strong', 'ruleset-name', rule.path),
+                createElement('span', `ruleset-tag advice-${impactKind({ deletable: rule.deletable })}`, rule.deletable),
+            );
+            row.append(head);
+            if (rule.owner) row.append(createElement('span', 'ruleset-owner', rule.owner));
+            if (rule.purpose) row.append(createElement('p', 'ruleset-purpose', rule.purpose));
+            list.append(row);
+        });
+        box.append(list);
+    } catch (error) {
+        box.replaceChildren(createElement('div', 'list-empty', `读取失败：${String(error)}`));
     }
 }
 
@@ -1741,7 +1799,7 @@ function initializeApp() {
         'providerSelect', 'baseUrlInput', 'apiKeyInput', 'keyStatus', 'modelInput', 'modelStatus', 'fetchModelsBtn',
         'configPath', 'openDataDirBtn', 'customLocationBtn', 'scanLocationNav', 'sidebarSettingsBtn', 'showSizeColumn', 'concurrencyInput',
         'saveSettingsBtn', 'refreshWhitelistBtn', 'whitelistSettingsList',
-        'refreshKnowledgeBtn', 'knowledgeSettingsList', 'guardSettingsContent', 'languageSelect',
+        'refreshKnowledgeBtn', 'knowledgeSettingsList', 'guardSettingsContent', 'rulesetSettingsContent', 'languageSelect',
         'aboutVersion', 'aboutBuildType', 'aboutPlatform', 'aboutOsVersion',
         'latestVersion', 'updateStatus', 'checkUpdateBtn', 'downloadUpdateBtn',
     ];

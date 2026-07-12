@@ -150,15 +150,8 @@ async fn run_scan(paths: &[PathBuf], enable_ai: bool, ai_batch: usize) {
         evidence.extensions.len()
     );
 
-    // 3. 加载内置规则
-    let rules_yaml = include_str!("../rules/built-in.yaml");
-    let engine = match rule_engine::RuleEngine::from_yaml_str(rules_yaml) {
-        Ok(e) => e,
-        Err(e) => {
-            eprintln!("规则加载失败: {}", e);
-            return;
-        }
-    };
+    // 3. 加载内置种子规则库
+    let engine = rule_engine::RuleEngine::seed();
 
     // 4. 先用本地规则判定
     let mut results: Vec<(DirectoryMeta, dirdetective_core::models::Verdict)> = dirs
