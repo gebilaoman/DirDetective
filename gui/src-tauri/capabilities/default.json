@@ -1,10 +1,11 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "主窗口所需的核心与更新器权限（应用自定义命令不受 ACL 限制，无需在此列出）。",
+  "description": "主窗口所需的核心与更新器权限（应用自定义命令不受 ACL 限制，无需在此列出）。shell:default 用于在系统浏览器打开 https/tel/mailto 外链（如「关于」页的 GitHub 链接）。",
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "updater:default"
+    "updater:default",
+    "shell:default"
   ]
 }

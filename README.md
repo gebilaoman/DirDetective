@@ -1,10 +1,14 @@
-# DirDetective — 看懂每个目录，再决定要不要清理
+# DirDetective（目录侦探） — 看懂每个目录，再决定要不要清理
 
-> 磁盘清理工具告诉你"哪里占地方"，DirDetective 告诉你"**这是谁的、存了什么、删了会怎样**"。
+> 总感觉磁盘越用越少，清理工具却检测不出来？那是藏在角落的「僵尸目录」在偷偷占地方——可又不敢随便删，怕删错。
+>
+> 磁盘清理工具只告诉你"哪里占地方"。DirDetective 告诉你每个目录**这是谁的、存了什么、删了会怎样**——看懂了再决定要不要清理。
 
 面向开发者与高级用户：家目录/缓存/应用支持里堆了一堆看不懂的隐藏目录（`.augmentcode`、`.V2rayU`、`.dat.nosync…`），不知道哪些还在用、哪些是卸载残留。DirDetective 帮你判断每个目录的**归属、用途、可删性**，再由你决定清理，而不是一个个拿去问 AI。
 
 当前为 **macOS 桌面应用**（Tauri，Rust + WebView），Windows/Linux 规划中。
+
+<p align="center"><img src="docs/screenshots/目录详情.png" width="760" alt="DirDetective 目录判定详情"></p>
 
 ---
 
@@ -21,10 +25,38 @@
 
 ---
 
+## 📸 界面预览
+
+<table>
+  <tr>
+    <td width="50%" align="center" valign="top"><img src="docs/screenshots/分析中.png" width="100%"><br><b>批量并发分析</b><br>进度 / 剩余时间估算 / 可随时停止</td>
+    <td width="50%" align="center" valign="top"><img src="docs/screenshots/问问AI.png" width="100%"><br><b>即席追问 AI</b><br>详情页直接问「这个路径是什么」</td>
+  </tr>
+</table>
+
+**设置面板**
+
+<table>
+  <tr>
+    <td width="25%" align="center" valign="top"><img src="docs/screenshots/设置-模型.png" width="100%"><br><b>模型配置</b><br>厂家 / Base URL / Key</td>
+    <td width="25%" align="center" valign="top"><img src="docs/screenshots/设置-官方规则库.png" width="100%"><br><b>官方规则库</b><br>联网检查更新</td>
+    <td width="25%" align="center" valign="top"><img src="docs/screenshots/设置-清理防护.png" width="100%"><br><b>清理防护</b><br>拦截系统/根/家目录</td>
+    <td width="25%" align="center" valign="top"><img src="docs/screenshots/设置-保护目录.png" width="100%"><br><b>保护目录</b><br>手动锁定关键目录</td>
+  </tr>
+  <tr>
+    <td width="25%" align="center" valign="top"><img src="docs/screenshots/设置-已识别目录.png" width="100%"><br><b>已识别目录</b><br>锁定复用准确结果</td>
+    <td width="25%" align="center" valign="top"><img src="docs/screenshots/设置-关于.png" width="100%"><br><b>关于</b><br>版本 / 检查更新 / GitHub</td>
+    <td width="25%" align="center" valign="top"><img src="docs/screenshots/设置-基本.png" width="100%"><br><b>基本设置</b><br>语言 / 界面偏好</td>
+    <td width="25%" align="center" valign="top"></td>
+  </tr>
+</table>
+
+---
+
 ## 🚀 直接使用（一般用户）
 
 1. 到 [Releases](https://github.com/gebilaoman/DirDetective/releases) 下载最新 macOS 安装包（`.dmg` / `.app`），拖到「应用程序」。
-2. **首次打开若提示"已损坏"**：这是未签名应用被 macOS Gatekeeper 拦截（并非真损坏）。终端执行一次即可：
+2. **首次打开若提示"已损坏"**：这是未签名应用被 macOS Gatekeeper 拦截（并非真损坏；**原因是目前还没有 Apple 个人开发者证书，App 未做签名与公证，所以需要这步手动放行**）。终端执行一次即可：
    ```bash
    xattr -dr com.apple.quarantine /Applications/DirDetective.app
    ```
@@ -118,7 +150,7 @@ code/DirDetective/
 |---|---|
 | v0.1 | ✅ 桌面应用（扫描 / 规则 + AI 分析 / 缓存 / 清理 / 设置） |
 | v0.1.x | ✅ 规则库路径化 JSON + 联网更新、i18n 框架、更新器 |
-| v0.2 | i18n 全量（动态文案 + 后端提示）、规则库扩充 |
+| **v0.2** | 🚧 i18n 全量（动态文案 + 后端提示）、规则库扩充（当前进行中） |
 | 后续 | Windows/Linux 适配、社区规则字典、Apple 签名公证 |
 
 ---

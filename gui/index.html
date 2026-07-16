@@ -13,10 +13,10 @@
         <header class="toolbar">
             <button id="upBtn" class="icon-button" type="button" data-i18n-title="toolbar.up" data-i18n-aria="toolbar.up">↑</button>
             <button id="scanBtn" class="primary-button" type="button" data-i18n="toolbar.scan">扫描</button>
-            <button id="chooseDirBtn" type="button" data-i18n="toolbar.chooseDir">选择目录</button>
-            <button id="analyzeAllBtn" type="button" data-i18n="toolbar.analyzeAll">分析当前目录</button>
-            <button id="previewPromptBtn" type="button" data-i18n="toolbar.preview">预览发送内容</button>
-            <button id="confirmAllBtn" type="button" data-i18n="toolbar.confirmAll">批量确认 AI 结果</button>
+            <button id="chooseDirBtn" type="button" hidden data-i18n="toolbar.chooseDir">选择目录</button>
+            <button id="analyzeAllBtn" type="button" data-i18n="toolbar.analyzeAll">AI分析目录</button>
+            <button id="previewPromptBtn" type="button" hidden data-i18n="toolbar.preview">预览发送内容</button>
+            <button id="confirmAllBtn" type="button" hidden data-i18n="toolbar.confirmAll">批量确认 AI 结果</button>
             <span class="toolbar-spacer"></span>
             <select id="filterSelect" data-i18n-aria="filter.aria">
                 <option value="all" data-i18n="filter.all">全部目录</option>
@@ -135,7 +135,7 @@
                                 <option value="6">6</option>
                                 <option value="8" data-i18n="settings.conc8">8（最快，注意限流）</option>
                             </select>
-                            <p class="field-note" data-i18n="settings.concNote">批量「分析当前目录」时同时进行的数量。越大越快，但更易触发厂家限流；设为 1 即逐个分析。</p>
+                            <p class="field-note" data-i18n="settings.concNote">批量「AI分析目录」时同时进行的数量。越大越快，但更易触发厂家限流；设为 1 即逐个分析。</p>
                         </div>
                         <div class="form-group">
                             <label data-i18n="settings.configDir">配置目录</label>

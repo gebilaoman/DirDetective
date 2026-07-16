@@ -1,4 +1,4 @@
-import { initLang, setLangPref, getLangPref, applyStaticI18n } from './i18n.js';
+import { initLang, setLangPref, getLangPref, applyStaticI18n, t } from './i18n.js';
 
 const tauriCore = window.__TAURI__?.core;
 const invoke = tauriCore?.invoke?.bind(tauriCore) ?? (async (command) => {
@@ -801,7 +801,7 @@ function renderDetail() {
         const ruleCopy = createElement('div', 'rule-confirmation-copy');
         ruleCopy.append(
             createElement('h3', '', result.cache_stale ? '缓存可能已过期' : '已自动缓存'),
-            createElement('p', '', result.cache_stale ? '旧结果仍保留；可重新检测，或认可并锁定当前判断。' : '无需再次调用 AI；你也可以认可并锁定这条判断。'),
+            createElement('p', '', result.cache_stale ? '旧结果仍保留；可重新分析，或认可并锁定当前判断。' : '无需再次调用 AI；你也可以认可并锁定这条判断。'),
         );
         const confirmButton = createElement('button', 'primary-button', '认可并锁定');
         confirmButton.type = 'button';
@@ -820,7 +820,7 @@ function renderDetail() {
     }
 
     const actions = createElement('div', 'detail-actions');
-    const analyzeButton = createElement('button', '', result.uiState === 'analyzing' ? '分析中…' : '重新检测');
+    const analyzeButton = createElement('button', '', result.uiState === 'analyzing' ? '分析中…' : '重新分析');
     analyzeButton.type = 'button';
     analyzeButton.disabled = result.uiState === 'analyzing';
     analyzeButton.addEventListener('click', () => analyzeDirectory(result));
@@ -903,7 +903,7 @@ async function scanDirectories(pathOverride) {
     render();
     elements.scanBtn.disabled = true;
     hideDetail();
-    elements.scanBtn.textContent = '扫描中…';
+    elements.scanBtn.textContent = t('toolbar.scanning');
     elements.scanStatus.textContent = `正在扫描 ${path}`;
     try {
         const response = await invoke('scan_paths', { paths: [path] });
@@ -949,7 +949,7 @@ async function scanDirectories(pathOverride) {
     } finally {
         if (requestId === scanRequestId) {
             elements.scanBtn.disabled = false;
-            elements.scanBtn.textContent = '扫描';
+            elements.scanBtn.textContent = t('toolbar.scan');
         }
     }
 }
@@ -1021,7 +1021,7 @@ async function analyzeCurrentDirectory() {
     const modelName = state.config.model || '当前模型';
     const concurrency = state.analyzeConcurrency;
     const confirmed = await confirmDialog({
-        title: '确认分析当前目录',
+        title: '确认 AI 分析当前目录',
         message: `将调用 AI 模型「${modelName}」逐个分析 ${pending.length} 个目录（并发 ${concurrency}）。\n\n此操作会消耗 API token 并产生相应费用。已确认锁定、命中内置规则的项会自动跳过。\n\n确定开始吗？`,
         confirmText: '开始分析',
     });
@@ -1075,7 +1075,7 @@ async function analyzeCurrentDirectory() {
     const skipped = total - done;
     isBatchAnalyzing = false;
     analysisAbort = false;
-    elements.analyzeAllBtn.textContent = '分析当前目录';
+    elements.analyzeAllBtn.textContent = t('toolbar.analyzeAll');
     elements.analyzeAllBtn.disabled = false;
     const totalElapsed = formatDuration(performance.now() - startedAt);
     elements.scanStatus.textContent = wasAborted
